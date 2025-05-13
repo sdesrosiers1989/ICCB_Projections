@@ -35,21 +35,41 @@ fi
 
 for m in {2..2}; do
 	
-    model=${models[${m}]}
-    variant=${variants[${m}]}
-    experiment=${experiments[${m}]}
-    
- 
-    tmax_file="${base_dir}${model}_${experiment}/${scen}/${variant}/mon/tasmax_${model}_*.nc"
-    tmin_file="${base_dir}${model}_${experiment}/${scen}/${variant}/mon/tasmin_${model}_*.nc"
-    pr_file="${base_dir}${model}_${experiment}/${scen}/${variant}/mon/pr_${model}_*.nc"
-    
-    tmax_out="${outdir}tasmax_${model}_${scen}_${variant}_${experiment}_aus-10i_10km_mon_1981-2100.nc"
-    tmin_out="${outdir}tasmin_${model}_${scen}_${variant}_${experiment}_aus-10i_10km_mon_1981-2100.nc"
-    pr_out="${outdir}pr_${model}_${scen}_${variant}_${experiment}_aus-10i_10km_mon_1981-2100.nc"
-    
-    cdo -setattribute,tasmax@units=degC -addc,-273.15 -select,name='tasmax' -selyear,1981/2100 -sellonlatbox,151,155,-26,-29.5 ${tmax_file} ${tmax_out}
-    cdo -setattribute,tasmin@units=degC -addc,-273.15 -select,name='tasmin' -selyear,1981/2100 -sellonlatbox,151,155,-26,-29.5 ${tmin_file} ${tmin_out}
-    cdo -setattribute,pr@units=mm -mulc,86400 -select,name='pr' -selyear,1981/2100 -sellonlatbox,151,155,-26,-29.5 ${pr_file} ${pr_out}
-    
+	model=${models[${m}]}
+	variant=${variants[${m}]}
+	experiment=${experiments[${m}]}
+
+
+	tmax_file="${base_dir}${model}_${experiment}/${scen}/${variant}/mon/tasmax_${model}_*.nc"
+	tmin_file="${base_dir}${model}_${experiment}/${scen}/${variant}/mon/tasmin_${model}_*.nc"
+	pr_file="${base_dir}${model}_${experiment}/${scen}/${variant}/mon/pr_${model}_*.nc"
+
+	tmax_out="${outdir}tasmax_${model}_${scen}_${variant}_${experiment}_aus-10i_10km_mon_1981-2100.nc"
+	tmin_out="${outdir}tasmin_${model}_${scen}_${variant}_${experiment}_aus-10i_10km_mon_1981-2100.nc"
+	pr_out="${outdir}pr_${model}_${scen}_${variant}_${experiment}_aus-10i_10km_mon_1981-2100.nc"
+
+	tmax_temp="${outdir}tasmax_${model}_${scen}_${variant}_${experiment}_temp.nc"
+	tmin_temp="${outdir}tasmin_${model}_${scen}_${variant}_${experiment}_temp.nc"
+	pr_temp="${outdir}pr_${model}_${scen}_${variant}_${experiment}_temp.nc"
+	
+	tmax_temp2="${outdir}tasmax_${model}_${scen}_${variant}_${experiment}_temp2.nc"
+	tmin_temp2="${outdir}tasmin_${model}_${scen}_${variant}_${experiment}_temp2.nc"
+	pr_temp2="${outdir}pr_${model}_${scen}_${variant}_${experiment}_temp2.nc"
+	
+	
+	cdo -setattribute,tasmax@units=degC -addc,-273.15 -select,name='tasmax' -selyear,1981/2100 -sellonlatbox,151,155,-26,-29.5 ${tmax_file} ${tmax_temp}
+	cdo -setattribute,tasmin@units=degC -addc,-273.15 -select,name='tasmin' -selyear,1981/2100 -sellonlatbox,151,155,-26,-29.5 ${tmin_file} ${tmin_temp}
+	cdo -setattribute,pr@units=mm -mulc,86400 -select,name='pr' -selyear,1981/2100 -sellonlatbox,151,155,-26,-29.5 ${pr_file} ${pr_temp}
+	
+	rm -f ${tmax_out} ${tmin_out} ${pr_out}
+	
+	ncks -C -x -v lat_bnds,lon_bnds,time_bnds ${tmax_temp} ${tmax_temp2}
+	ncks -C -x -v lat_bnds,lon_bnds,time_bnds ${tmin_temp} ${tmin_temp2}
+	ncks -C -x -v lat_bnds,lon_bnds,time_bnds ${pr_temp} ${pr_temp2}
+	
+	ncpdq -a time,lat,lon ${tmax_temp2} ${tmax_out}
+	ncpdq -a time,lat,lon ${tmin_temp2} ${tmin_out}
+	ncpdq -a time,lat,lon ${pr_temp2} ${pr_out}
+	
+	rm -f ${tmax_temp} ${tmin_temp} ${pr_temp} ${tmax_temp2} ${tmin_temp2} ${pr_temp2}
 done
