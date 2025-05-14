@@ -143,6 +143,9 @@ names(tmax) = dates
 names(tmin) = dates
 names(pr) = dates
 
+# Plot the data
+levelplot(mean(tmin[[0:360]]), margin = FALSE, par.settings = YlOrRdTheme, main = 'TMIN')
+
 # Masking data to Sunshine Coast
 pr_masked <- crop(pr, lga_shp, mask = TRUE)
 tmin_masked <- crop(tmin, lga_shp, mask = TRUE)
@@ -167,9 +170,6 @@ tmax_ave$date <- rownames(tmax_ave)
 df <- merge(pr_ave, tmin_ave, by = "date", all = TRUE)
 df <- merge(df, tmax_ave, by = "date", all = TRUE)
 
-# plot dataframe
-
-
 
 # Select the baseline (1981-2010)
 df$date <- as.Date(df$date)
@@ -182,7 +182,8 @@ df_fut = subset(df, year >= 2071 & year <= 2100)
 bio_base = biovars(df_base$pr, df_base$tmin, df_base$tmax)
 bio_fut = biovars(df_fut$pr, df_fut$tmin, df_fut$tmax)
 
-
+print(bio_base[, c("bio5", "bio6", "bio7", "bio12", "bio15")])
+print(bio_fut[, c("bio5", "bio6", "bio7", "bio12", "bio15")])
 
 
 

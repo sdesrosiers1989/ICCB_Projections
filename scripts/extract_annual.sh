@@ -20,9 +20,9 @@ module load QCEstandard
 
 # Arguments ------------------------------------------------------------------------------------ #
 
-models=("ACCESS-CM2" "EC-Earth3" "GFDL-ESM4")
-variants=("r2i1p1f1" "r1i1p1f1" "r1i1p1f1")
-experiments=("CCAM10oc" "CCAM10" "CCAM10")
+models=("ACCESS-ESM1-5" "EC-Earth3" "GFDL-ESM4")
+variants=("r6i1p1f1" "r1i1p1f1" "r1i1p1f1")
+experiments=("CCAM10" "CCAM10" "CCAM10")
 
 scen="ssp370"
 
