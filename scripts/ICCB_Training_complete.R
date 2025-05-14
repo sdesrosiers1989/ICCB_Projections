@@ -60,11 +60,7 @@ plot(tas_fut)
 tas_dif = tas_fut - tas_base
 plot(tas_dif)
 
-# Can you make this plot nicer? Add a title and change the colours
-# Hint: You can set plot titles using 'main'
-# Control the colours using col = brewer.pal(11, 'PaletteName') (see https://colorbrewer2.org/ for colour options)
-# You can plot multiple figures in one plot using par (mfrow = c(nrows, ncols))
-
+# Can you make this plot nicer? Add a title and cha
 
 # Extracting out point data (timeseries)
 tas[50,50]
@@ -127,8 +123,7 @@ my.at = c(-Inf, my.at, Inf)
 levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
                 col.regions=((brewer.pal(11,"RdBu"))))
   
-# Can you modify this plot to show more infomation? Can you add a title and change the colours?
-# Would showing multiple models on this plot help?
+
 
 # Part 3: Calculating BioClim Indices 
 
