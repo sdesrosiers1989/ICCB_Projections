@@ -9,6 +9,7 @@ This repository has all of the scripts and data for the workshop on using climat
 
 ## Scripts
 `ICCB_Training.R`: the training script. This is what will be used in the workshop.  
+`ICCB_Training_complete.R`: the training script with additional examples. Try not to look at these until you've had a go yourself!
 
 The remaining scripts in this folder were used to prepare the workshop data and are included for interest only.
 
