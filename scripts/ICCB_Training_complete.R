@@ -48,22 +48,39 @@ plot(tas[[1]])
 plot(tas[[1:4]])
 plot(tas[[117:120]])
 
-# Calculating climatology for baseline (1981-2010)
-tas_base = mean(tas[[1:30]])
-plot(tas_base)
+# Can also sub-set the data according to the date array
+plot(tas[[dates >= as.Date("1981-01-01") & dates <= as.Date("1984-01-01")]])
+plot(tas[[dates >= as.Date("2097-01-01") & dates <= as.Date("2100-01-01")]])
 
-# Calculating climatology for future (2071-2100)
-tas_fut = mean(tas[[91:120]])
+tas_base = mean(tas[[1:30]])      # Calculating climatology for baseline (1981-2010)
+tas_fut = mean(tas[[91:120]])     # Calculating climatology for future (2071-2100)
+
+# Q: Can you cut the historical data and future based on the dates?
+tas_base = mean(tas[[dates >= as.Date("1981-01-01") & dates <= as.Date("2010-01-01")]])
+tas_fut = mean(tas[[dates >= as.Date("2071-01-01") & dates <= as.Date("2100-01-01")]])
+
+plot(tas_base)
 plot(tas_fut)
 
 # Change in future temperature (future - base)
 tas_dif = tas_fut - tas_base
 plot(tas_dif)
 
-# Can you make this plot nicer? Add a title and labels
+# Can you make this plot nicer? Add a title and change the colours
+# Hint: You can set plot titles using 'main'
+# Control the colours using col = brewer.pal(11, 'PaletteName') (see https://colorbrewer2.org/ for colour options)
+# You can plot multiple figures in one plot using par (mfrow = c(nrows, ncols))
+qld_shp = vect('C:/R Code/Training/ICCB_training/data/shp/QLD_State_Mask.shp') # this was going to be loaded later in the workshop, but loading now for plotting
+par( mfrow= c(3,1) ) # Set up figure to have 3 rows and 1 column
+plot(tas_base, col = brewer.pal(11,"YlOrRd"), main = "Historical", range = c(14, 30))
+lines(qld_shp)
+plot(tas_fut, col = brewer.pal(11,"YlOrRd"), main = "Future", range = c(14, 30))
+lines(qld_shp)
+plot(tas_dif, col = rev(brewer.pal(11,"RdBu")), main = "Change")
+lines(qld_shp)
 
 # Extracting out point data (timeseries)
-tas[50,50]
+tas[50,50]                  # extracts data from the 50th lat and 50th lon position
 df = melt(tas[50,50])
 
 # Basic plot
@@ -81,11 +98,30 @@ ggplot(data = spat_ave, aes(y=mean, x=date))+
   geom_smooth(method = "lm") +
   theme_bw()
 
+# Can you add another model to this plot and compare the two?
+# Hint: You'll need to prepare a dataframe with data for all models in it. One of the columns will need to be the values, and the other the model name.
+spat_ave$model <- "GFDL-ESM4" # add model name to your spatial average data
+tas_ECEarth <- rast("tas_EC-Earth3_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_sem_1981-2100.nc") # load in a new model and prepare the datafarme
+spat_ave_EC <- global(tas_ECEarth, fun = mean, na.rm = TRUE)
+spat_ave_EC$date <- dates
+spat_ave_EC$model <- 'EC-Earth3'
+df <- rbind(spat_ave, spat_ave_EC) # make a new dataframe with data for both models in it
+
+ggplot(data = df, aes(y=mean, x=date, group=model, color = model))+ 
+  ylab('Temperature (degC)') + xlab('Year') +
+  geom_point() +
+  geom_line() +
+  geom_smooth(method = "lm") +
+  theme_bw() +
+  theme(legend.position='bottom') +
+  scale_color_manual(name = 'Model', values = c("#1b9e77", "#7570b3"))
+  
 
 # Part 2: Rainfall Data (multiple models)
 
 # Working with multiple Models
-pr_files <- list.files(pattern = "pr", full.names = FALSE)
+pr_files <- list.files(pattern = "pr", full.names = FALSE)         # Lists all files, including all scenarios
+pr_files <- list.files(pattern = "pr.*ssp370", full.names = FALSE)    # Lists files with only ssp370
 
 pr_data = rast(pr_files)*365.25  # daily mean to annual total
 pr_data
@@ -100,10 +136,16 @@ pr_modavg = tapp(pr_data, years, fun = mean)
 
 # Calculating climatology for baseline (1981-2010)
 pr_base = mean(pr_modavg[[1:30]])  # Converting from daily mean to annual mean
-levelplot(pr_base)
 
 # Calculating climatology for future (2071-2100)
 pr_fut = mean(pr_modavg[[91:120]])  # Converting from daily mean to annual mean
+
+# Q: Can you select the data based on the years instead?
+pr_base = mean(pr_modavg[[years>=1981 & years<=2010]])  # Converting from daily mean to annual mean
+pr_fut = mean(pr_modavg[[years>=2071 & years<=2100]])  # Converting from daily mean to annual mean
+
+# Plot historic and future rainfall
+levelplot(pr_base)
 levelplot(pr_fut)
 
 # Cutting data to Queensland
@@ -123,6 +165,58 @@ my.at = c(-Inf, my.at, Inf)
 levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
                 col.regions=((brewer.pal(11,"RdBu"))))
   
+# Can you modify this plot to show more infomation? Can you add a title and change the colours?
+# Would showing multiple models on this plot help?
+# We've included levelplot here as it's a popular package that creates nicer base plots than the basic plotting function
+# however it doesn't work that well with terra when it comes to shapefiles. To plot shapefiles over the raster you'll need to convert
+# the data 
+library(grid) # if we want to control multiple panels when plotting with levelplot, use the grid package
+library(gridExtra) 
+
+qld2 <- as(qld_shp, "Spatial") # convert terra shapefile into format compatible with sp.polygons
+
+# Create new bins for base plot
+my.at_base <- seq(0, 1000, length.out = 10)
+my.at_base = c(my.at_base, Inf)
+
+pr_base_mask <-  crop(pr_base, qld_shp, mask = TRUE)
+
+p1 <- levelplot(pr_base_mask, at = my.at_base, cuts=11, pretty=T,
+          col.regions=rev((brewer.pal(11,"PRGn"))), margin = FALSE,
+          main = list(label = 'Historical', cex = 1), # cex controls font size
+          colorkey = list(title = "mm/year")) +
+      latticeExtra::layer(sp.polygons(qld2)) # tell R we want to use layer from lattice, not from ggplot2
+p2 <- levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
+                col.regions=rev((brewer.pal(11,"PRGn"))), margin = FALSE,
+                main = list(label = 'Precipitation Change', cex = 1),
+                colorkey = list(title = "%")) +
+      latticeExtra::layer(sp.polygons(qld2))
+
+grid.arrange(p1, p2, nrow = 2, top = textGrob('Ensemble Average', gp=gpar(fontsize=15)))
+
+
+# Plotting against another emissions scenario
+pr_files_245 <- list.files(pattern = "pr.*ssp245", full.names = FALSE)    # Lists files with only ssp370
+pr_data_245 = rast(pr_files_245)*365.25  # daily mean to annual total
+names(pr_data_245) = years_rep
+pr_modavg_245 = tapp(pr_data_245, years, fun = mean)
+pr_base_245 = mean(pr_modavg_245[[years>=1981 & years<=2010]])  # Converting from daily mean to annual mean
+pr_fut_245 = mean(pr_modavg_245[[years>=2071 & years<=2100]])  # Converting from daily mean to annual mean
+pr_pdif_245 = (pr_fut_245 - pr_base_245 ) / pr_base_245 *100  #Percent difference
+pr_pdif_245_masked <- crop(pr_pdif_245, qld_shp, mask = TRUE)
+
+p1 <- levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
+                col.regions=rev((brewer.pal(11,"PRGn"))), margin = FALSE,
+                main = list(label = 'Precipitation Change: SSP370', cex = 1),
+                colorkey = list(title = "%")) +
+  latticeExtra::layer(sp.polygons(qld2))
+p2 <- levelplot(pr_pdif_245_masked, at = my.at, cuts=11, pretty=T,
+                col.regions=rev((brewer.pal(11,"PRGn"))), margin = FALSE,
+                main = list(label = 'Precipitation Change: SSP245', cex = 1),
+                colorkey = list(title = "%")) +
+  latticeExtra::layer(sp.polygons(qld2))
+
+grid.arrange(p1, p2, nrow = 1, ncol=2, top = textGrob('Ensemble Average', gp=gpar(fontsize=15)))
 
 
 # Part 3: Calculating BioClim Indices 
@@ -146,7 +240,64 @@ names(tmin) = dates
 names(pr) = dates
 
 # Plot the data
-levelplot(mean(tmin[[0:360]]), margin = FALSE, par.settings = YlOrRdTheme, main = 'TMIN')
+lga_shp2 <- as(lga_shp, "Spatial") # convert terra shapefile into format compatible with sp.polygons
+qld2 <- as(qld_shp, "Spatial")
+levelplot(mean(tmin[[0:360]]), margin = FALSE, par.settings = BuRdTheme, main = 'TMIN') +
+  latticeExtra::layer(sp.polygons(lga_shp2, col = 'blue')) + # tell R we want to use layer from lattice, not from ggplot2
+  latticeExtra::layer(sp.polygons(qld2))
+
+
+# Validating the data against observations
+setwd("C:/R Code/Training/ICCB_training/data/obs/")
+getwd() # get work directory
+dir() # list files in the work directory
+
+# Load in observation data
+obs_tmax = rast(list.files(pattern = "tmax", full.names = FALSE))
+obs_tmin = rast(list.files(pattern = "tmin", full.names = FALSE))
+obs_pr = rast(list.files(pattern = "precip", full.names = FALSE))
+
+# Interogate the data (note the difference in resolution and time period)
+# to compare data need to make them on the same spatial and temporal scales...
+obs_tmax
+tmax
+
+# Resampling the data to the same spatial extent
+obs_tmax_regridded <- resample(obs_tmax, tmax, method = "bilinear")
+obs_tmin_regridded <- resample(obs_tmin, tmin, method = "bilinear")
+obs_pr_regridded <- resample(obs_pr, pr, method = "bilinear")  # note typically we would use distance weighted interpolation outside of R
+
+# retrieve model data over the same period as the observations
+tmax_his = tmax[[dates >= as.Date("1981-01-01") & dates < as.Date("2021-01-01")]]
+tmin_his = tmin[[dates >= as.Date("1981-01-01") & dates < as.Date("2021-01-01")]]
+pr_his = pr[[dates >= as.Date("1981-01-01") & dates < as.Date("2021-01-01")]]
+
+# compare data now
+obs_pr_regridded
+pr_his
+
+
+# evaluate the bias of tmin
+obs_tmin_regridded_mean = mean(obs_tmin_regridded)
+tmin_his_mean = mean(tmin_his)
+tmin_bias = (tmin_his_mean - obs_tmin_regridded_mean)
+tmin_bias_masked <- crop(tmin_bias, qld_shp, mask = TRUE)
+
+# Plot the bias
+my.at <- seq(-3, 3, length.out = 10)
+my.at = c(-Inf, my.at, Inf)
+levelplot(tmin_bias_masked, at = my.at, margin = FALSE, cuts=11, pretty=T, main = 'Tmin bias (degC)',
+          col.regions=rev((brewer.pal(11,"RdBu")))) +
+  latticeExtra::layer(sp.polygons(lga_shp2, col = 'blue')) + # tell R we want to use layer from lattice, not from ggplot2
+  latticeExtra::layer(sp.polygons(qld2))
+
+# Quantify the bias using RMSE and MAPE
+rmse = global((tmin_his_mean - obs_tmin_regridded_mean)^2, fun = "mean", na.rm = TRUE)[1]
+print(paste("RMSE:", rmse))
+
+mape = global((abs((tmin_his_mean - obs_tmin_regridded_mean) / obs_tmin_regridded_mean) * 100), fun = "mean", na.rm = TRUE)[1]
+print(paste("MAPE:", mape))
+
 
 # Masking data to Sunshine Coast
 pr_masked <- crop(pr, lga_shp, mask = TRUE)
@@ -154,9 +305,24 @@ tmin_masked <- crop(tmin, lga_shp, mask = TRUE)
 tmax_masked <- crop(tmax, lga_shp, mask = TRUE)
 
 # Spatial average
-pr_ave = global(pr_masked, fun=mean, na.rm=TRUE)
-tmin_ave = global(tmin_masked, fun=mean, na.rm=TRUE)
-tmax_ave = global(tmax_masked, fun=mean, na.rm=TRUE)
+pr_ave_coarse = global(pr_masked, fun=mean, na.rm=TRUE)
+tmin_ave_coarse = global(tmin_masked, fun=mean, na.rm=TRUE)
+tmax_ave_coarse = global(tmax_masked, fun=mean, na.rm=TRUE)
+
+# Plot the masked data
+lga_shp2 <- as(lga_shp, "Spatial") # convert terra shapefile into format compatible with sp.polygons
+levelplot(mean(tmin_masked[[0:360]]), margin = FALSE, par.settings = BuRdTheme, main = 'TMIN') +
+  latticeExtra::layer(sp.polygons(lga_shp2, col = 'blue'))  # tell R we want to use layer from lattice, not from ggplot2
+
+# Weighted spatial average
+pr_ave = as.data.frame(t(terra::extract(pr, lga_shp, weights=TRUE, fun=mean, na.rm=TRUE, ID=FALSE)))
+tmin_ave = as.data.frame(t(terra::extract(tmin, lga_shp, weights=TRUE, fun=mean, na.rm=TRUE, ID=FALSE)))
+tmax_ave = as.data.frame(t(terra::extract(tmax, lga_shp, weights=TRUE, fun=mean, na.rm=TRUE, ID=FALSE)))
+
+# Comparison of average vs spatial average
+par( mfrow= c(1,1) )
+plot(pr_ave_coarse$mean, pr_ave$V1, xlab = "Average", ylab = "Spatial Average")
+
 
 # Rename header from mean to variable for merging
 colnames(pr_ave)[1] <- "pr"
@@ -184,8 +350,96 @@ df_fut = subset(df, year >= 2071 & year <= 2100)
 bio_base = biovars(df_base$pr, df_base$tmin, df_base$tmax)
 bio_fut = biovars(df_fut$pr, df_fut$tmin, df_fut$tmax)
 
-print(bio_base[, c("bio5", "bio6", "bio7", "bio12", "bio15")])
-print(bio_fut[, c("bio5", "bio6", "bio7", "bio12", "bio15")])
+print(bio_base[, c("bio5", "bio6", "bio12", "bio15")])
+print(bio_fut[, c("bio5", "bio6", "bio12", "bio15")])
 
+## How would you calculate the bioclimatic indicators for all cells within the file?
+# Loops in R: https://www.geeksforgeeks.org/loops-in-r-for-while-repeat/
 
+# Get size of input data so we can setup an output array
+lats <- ncol(pr_masked)
+lons <- nrow(pr_masked)
+times <- dim(pr_masked)[3]
 
+# Create output array
+syear <- 1981
+eyear <- 2100
+nyears <- eyear - syear + 1
+fill_value <- NaN
+out <- array(data=fill_value, dim = c(19, lons, lats, nyears))
+
+print('Beginning bioclimatic indices calculation')
+
+for(i in seq(1, lons)){ # loop through lons
+  
+  for(j in seq(1, lats)){ # loop through lats
+    
+    #Print some information about where you are in the process
+    string <- paste(i,",",j)
+    print(string)
+    
+    if (is.na(pr_masked[i,j, 1]$`1981-01-01`) == FALSE) { # check if data masked
+     
+      for(year in seq(syear, eyear)){
+        
+        # Define time indices
+        year_index <- (year - syear) + 1
+        start_index <- 12 * (year - syear) + 1
+        end_index <- 12 * (year - syear) + 12
+        
+        # Get input data
+        df <- data.frame(
+          pr = unlist(array(pr_masked[i, j, start_index:end_index])),
+          tasmin = unlist(array(tmin_masked[i, j, start_index:end_index])),
+          tasmax = unlist(array(tmax_masked[i, j, start_index:end_index])))
+        
+        # Create input data
+        if (is.na(df[1,1]) == FALSE) {
+          bioclim_out <- biovars(df$pr, df$tasmin, df$tasmax)
+          #print(bioclim_out)
+          for (k in seq(1,19)) {
+            out[k, i, j, year_index] <- bioclim_out[k]
+          }
+          
+        }
+        
+      }
+      
+    }
+    
+  }
+  
+}
+
+# At this point we usually save the file as a netcdf using the netcdf package 
+# https://search.r-project.org/CRAN/refmans/ncdf4/html/ancvar_put.html
+# https://www.r-bloggers.com/2016/08/a-netcdf-4-in-r-cheatsheet/
+
+# Plot examples
+bioclim_base <- out[,,,1:30]
+bioclim_fut <- out[,,,91:120]
+bioclim_base_clim <- apply(bioclim_base, c(1, 2, 3), FUN = mean) # average over time to get climatology
+bioclim_fut_clim <- apply(bioclim_fut, c(1, 2, 3), FUN = mean) # average over time to get future climatology
+
+# turn back into a terra raster for plotting
+# This isn't something we usually do, but doing it here for display purposes
+bioclim_base_clim_ras <- rast(extent=c(152.55,153.15,-26.95,-26.45), ncol = 6, nrow = 5, nlyr = 19, crs = crs(pr_masked))
+for (i in seq(1,19)){
+  values(bioclim_base_clim_ras[[i]]) <- bioclim_base_clim[i,,]
+}
+
+#plot one
+levelplot(bioclim_base_clim_ras[[1]], margin = FALSE, main = "BIO 1: Annual Mean Temperature", col.regions=((brewer.pal(9,"YlOrRd"))),
+          at = seq(16, 22, length.out = 10))
+
+# Plot all temp together together
+my.at <- seq(0, 50, length.out = 10)
+my.at = c(my.at, Inf)
+levelplot(bioclim_base_clim_ras[[1:11]], margin = FALSE, main = "BIOCLIMATIC INDICATORS", col.regions=((brewer.pal(9,"YlOrRd"))),
+          at = my.at, names =  c("BIO1", "BIO2", "BIO3", "BIO4", "BIO5", "BIO6", "BIO7", "BIO8", "BIO9", "BIO10", "BIO11"))
+
+#Plot all precip together
+my.at <- seq(0, 50, length.out = 9)
+my.at = c(my.at, Inf)
+levelplot(bioclim_base_clim_ras[[12:19]], margin = FALSE, main = "BIOCLIMATIC INDICATORS", col.regions=((brewer.pal(9,"GnBu"))),
+          at = my.at, names =  c("BIO12", "BIO13", "BIO14", "BIO15", "BIO16", "BIO17", "BIO18", "BIO19"))

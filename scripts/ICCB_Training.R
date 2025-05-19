@@ -48,12 +48,16 @@ plot(tas[[1]])
 plot(tas[[1:4]])
 plot(tas[[117:120]])
 
-# Calculating climatology for baseline (1981-2010)
-tas_base = mean(tas[[1:30]])
-plot(tas_base)
+# Can also sub-set the data according to the date array
+plot(tas[[dates >= as.Date("1981-01-01") & dates <= as.Date("1984-01-01")]])
+plot(tas[[dates >= as.Date("2097-01-01") & dates <= as.Date("2100-01-01")]])
 
-# Calculating climatology for future (2071-2100)
-tas_fut = mean(tas[[91:120]])
+tas_base = mean(tas[[1:30]])      # Calculating climatology for baseline (1981-2010)
+tas_fut = mean(tas[[91:120]])     # Calculating climatology for future (2071-2100)
+
+# Q: Can you cut the historical data and future based on the dates?
+
+plot(tas_base)
 plot(tas_fut)
 
 # Change in future temperature (future - base)
@@ -67,7 +71,7 @@ plot(tas_dif)
 # Also check the instructions from Session 1!
 
 # Extracting out point data (timeseries)
-tas[50,50]
+tas[50,50]                  # extracts data from the 50th lat and 50th lon position
 df = melt(tas[50,50])
 
 # Basic plot
@@ -91,7 +95,8 @@ ggplot(data = spat_ave, aes(y=mean, x=date))+
 # Part 2: Rainfall Data (multiple models)
 
 # Working with multiple Models
-pr_files <- list.files(pattern = "pr", full.names = FALSE)
+pr_files <- list.files(pattern = "pr", full.names = FALSE)            # Lists all files, including all scenarios
+pr_files <- list.files(pattern = "pr.*ssp370", full.names = FALSE)    # Lists files with only ssp370
 
 pr_data = rast(pr_files)*365.25  # daily mean to annual total
 pr_data
@@ -106,10 +111,15 @@ pr_modavg = tapp(pr_data, years, fun = mean)
 
 # Calculating climatology for baseline (1981-2010)
 pr_base = mean(pr_modavg[[1:30]])  # Converting from daily mean to annual mean
-levelplot(pr_base)
 
 # Calculating climatology for future (2071-2100)
 pr_fut = mean(pr_modavg[[91:120]])  # Converting from daily mean to annual mean
+
+# Q: Can you select the data based on the years instead?
+
+
+# Plot historic and future rainfall
+levelplot(pr_base)
 levelplot(pr_fut)
 
 # Cutting data to Queensland
@@ -131,6 +141,9 @@ levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
   
 # Can you modify this plot to show more infomation? Can you add a title and change the colours?
 # Would showing multiple models on this plot help?
+
+# Can we compare the results from SSP370 to another Scenario?
+
 
 # Part 3: Calculating BioClim Indices  !!! add AGCD !!! 
 
@@ -159,15 +172,83 @@ levelplot(mean(tmin[[0:360]]), margin = FALSE, par.settings = BuRdTheme, main = 
   latticeExtra::layer(sp.polygons(lga_shp2, col = 'blue')) + # tell R we want to use layer from lattice, not from ggplot2
   latticeExtra::layer(sp.polygons(qld2))
 
+
+# Validating the data against observations
+setwd("C:/R Code/Training/ICCB_training/data/obs/")
+getwd() # get work directory
+dir() # list files in the work directory
+
+# Load in observation data
+obs_tmax = rast(list.files(pattern = "tmax", full.names = FALSE))
+obs_tmin = rast(list.files(pattern = "tmin", full.names = FALSE))
+obs_pr = rast(list.files(pattern = "precip", full.names = FALSE))
+
+# Interogate the data (note the difference in resolution and time period)
+# to compare data need to make them on the same spatial and temporal scales...
+obs_tmax
+tmax
+
+# Resampling the data to the same spatial extent
+obs_tmax_regridded <- resample(obs_tmax, tmax, method = "bilinear")
+obs_tmin_regridded <- resample(obs_tmin, tmin, method = "bilinear")
+obs_pr_regridded <- resample(obs_pr, pr, method = "bilinear")  # note typically we would use distance weighted interpolation outside of R
+
+# retrieve model data over the same period as the observations
+tmax_his = tmax[[dates >= as.Date("1981-01-01") & dates < as.Date("2021-01-01")]]
+tmin_his = tmin[[dates >= as.Date("1981-01-01") & dates < as.Date("2021-01-01")]]
+pr_his = pr[[dates >= as.Date("1981-01-01") & dates < as.Date("2021-01-01")]]
+
+# compare data now
+obs_pr_regridded
+pr_his
+
+
+# evaluate the bias of tmin
+obs_tmin_regridded_mean = mean(obs_tmin_regridded)
+tmin_his_mean = mean(tmin_his)
+tmin_bias = (tmin_his_mean - obs_tmin_regridded_mean)
+tmin_bias_masked <- crop(tmin_bias, qld_shp, mask = TRUE)
+
+# Plot the bias
+my.at <- seq(-3, 3, length.out = 10)
+my.at = c(-Inf, my.at, Inf)
+levelplot(tmin_bias_masked, at = my.at, margin = FALSE, cuts=11, pretty=T, main = 'Tmin bias (degC)',
+          col.regions=rev((brewer.pal(11,"RdBu")))) +
+  latticeExtra::layer(sp.polygons(lga_shp2, col = 'blue')) + # tell R we want to use layer from lattice, not from ggplot2
+  latticeExtra::layer(sp.polygons(qld2))
+
+# Quantify the bias using RMSE and MAPE
+rmse = global((tmin_his_mean - obs_tmin_regridded_mean)^2, fun = "mean", na.rm = TRUE)[1]
+print(paste("RMSE:", rmse))
+
+mape = global((abs((tmin_his_mean - obs_tmin_regridded_mean) / obs_tmin_regridded_mean) * 100), fun = "mean", na.rm = TRUE)[1]
+print(paste("MAPE:", mape))
+
+
 # Masking data to Sunshine Coast
 pr_masked <- crop(pr, lga_shp, mask = TRUE)
 tmin_masked <- crop(tmin, lga_shp, mask = TRUE)
 tmax_masked <- crop(tmax, lga_shp, mask = TRUE)
 
 # Spatial average
-pr_ave = global(pr_masked, fun=mean, na.rm=TRUE)
-tmin_ave = global(tmin_masked, fun=mean, na.rm=TRUE)
-tmax_ave = global(tmax_masked, fun=mean, na.rm=TRUE)
+pr_ave_coarse = global(pr_masked, fun=mean, na.rm=TRUE)
+tmin_ave_coarse = global(tmin_masked, fun=mean, na.rm=TRUE)
+tmax_ave_coarse = global(tmax_masked, fun=mean, na.rm=TRUE)
+
+# Plot the masked data
+lga_shp2 <- as(lga_shp, "Spatial") # convert terra shapefile into format compatible with sp.polygons
+levelplot(mean(tmin_masked[[0:360]]), margin = FALSE, par.settings = BuRdTheme, main = 'TMIN') +
+  latticeExtra::layer(sp.polygons(lga_shp2, col = 'blue'))  # tell R we want to use layer from lattice, not from ggplot2
+
+# Weighted spatial average
+pr_ave = as.data.frame(t(terra::extract(pr, lga_shp, weights=TRUE, fun=mean, na.rm=TRUE, ID=FALSE)))
+tmin_ave = as.data.frame(t(terra::extract(tmin, lga_shp, weights=TRUE, fun=mean, na.rm=TRUE, ID=FALSE)))
+tmax_ave = as.data.frame(t(terra::extract(tmax, lga_shp, weights=TRUE, fun=mean, na.rm=TRUE, ID=FALSE)))
+
+# Comparison of average vs spatial average
+par( mfrow= c(1,1) )
+plot(pr_ave_coarse$mean, pr_ave$V1, xlab = "Average", ylab = "Spatial Average")
+
 
 # Rename header from mean to variable for merging
 colnames(pr_ave)[1] <- "pr"
@@ -195,8 +276,8 @@ df_fut = subset(df, year >= 2071 & year <= 2100)
 bio_base = biovars(df_base$pr, df_base$tmin, df_base$tmax)
 bio_fut = biovars(df_fut$pr, df_fut$tmin, df_fut$tmax)
 
-print(bio_base[, c("bio5", "bio6", "bio7", "bio12", "bio15")])
-print(bio_fut[, c("bio5", "bio6", "bio7", "bio12", "bio15")])
+print(bio_base[, c("bio5", "bio6", "bio12", "bio15")])
+print(bio_fut[, c("bio5", "bio6", "bio12", "bio15")])
 
 
 ## How would you calculate the bioclimatic indicators for all cells within the file?

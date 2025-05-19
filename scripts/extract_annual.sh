@@ -6,7 +6,7 @@
 #PBS -j oe
 #PBS -l walltime=24:00:00
 #PBS -l mem=10gb
-#PBS -q ccamamdq
+#PBS -q ccamamd2q
 
 # Load Modules
 module purge
@@ -24,7 +24,7 @@ models=("ACCESS-ESM1-5" "EC-Earth3" "GFDL-ESM4")
 variants=("r6i1p1f1" "r1i1p1f1" "r1i1p1f1")
 experiments=("CCAM10" "CCAM10" "CCAM10")
 
-scen="ssp245"
+scen="ssp126"
 
 outdir="/export/home/qclim/repositories/projects/collaborations/workshops/ICCB/data/annual/"
 base_dir="/scratch/qclimdata/CCAM/CORDEX-CMIP6/AUS-10i/post-processed/"
