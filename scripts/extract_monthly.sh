@@ -24,7 +24,7 @@ models=("ACCESS-CM2" "EC-Earth3" "GFDL-ESM4")
 variants=("r2i1p1f1" "r1i1p1f1" "r1i1p1f1")
 experiments=("CCAM10oc" "CCAM10" "CCAM10")
 
-scen="ssp370"
+scen="ssp126"
 
 outdir="/export/home/qclim/repositories/projects/collaborations/workshops/ICCB/data/monthly/"
 base_dir="/scratch/qclimdata/CCAM/CORDEX-CMIP6/AUS-10i/post-processed/"
@@ -33,7 +33,7 @@ if [ ! -d ${outdir} ]; then
 	 mkdir -p ${outdir}
 fi
 
-for m in {2..2}; do
+for m in {0..2}; do
 	
 	model=${models[${m}]}
 	variant=${variants[${m}]}

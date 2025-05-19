@@ -24,7 +24,7 @@ models=("ACCESS-ESM1-5" "EC-Earth3" "GFDL-ESM4")
 variants=("r6i1p1f1" "r1i1p1f1" "r1i1p1f1")
 experiments=("CCAM10" "CCAM10" "CCAM10")
 
-scen="ssp370"
+scen="ssp245"
 
 outdir="/export/home/qclim/repositories/projects/collaborations/workshops/ICCB/data/annual/"
 base_dir="/scratch/qclimdata/CCAM/CORDEX-CMIP6/AUS-10i/post-processed/"
@@ -48,7 +48,7 @@ for m in {0..2}; do
     
     #cdo -selyear,1981/2100 -sellonlatbox,137.5,155,-9,-29.5 ${tas_file} ${tas_out}
     #cdo -selyear,1981/2100 -sellonlatbox,137.5,155,-9,-29.5 ${pr_file} ${pr_out}
-   
-	  cdo -setattribute,tas_annual@units=degC -addc,-273.15 -select,name='tas_annual' -selyear,1981/2100 -sellonlatbox,137.5,155,-9,-29.5 ${tas_file} ${tas_out}
+    
+    cdo -setattribute,tas_annual@units=degC -addc,-273.15 -select,name='tas_annual' -selyear,1981/2100 -sellonlatbox,137.5,155,-9,-29.5 ${tas_file} ${tas_out}
     cdo -setattribute,pr_annual@units=mm -mulc,86400 -select,name='pr_annual' -selyear,1981/2100 -sellonlatbox,137.5,155,-9,-29.5 ${pr_file} ${pr_out}
 done

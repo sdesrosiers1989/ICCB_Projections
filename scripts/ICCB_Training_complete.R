@@ -60,7 +60,7 @@ plot(tas_fut)
 tas_dif = tas_fut - tas_base
 plot(tas_dif)
 
-# Can you make this plot nicer? Add a title and cha
+# Can you make this plot nicer? Add a title and labels
 
 # Extracting out point data (timeseries)
 tas[50,50]

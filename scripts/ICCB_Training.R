@@ -3,13 +3,13 @@
 ################################################################
 
 ## Install packages
-install.packages("terra")
-install.packages("dplyr")
-install.packages("sf")
-install.packages("ggplot2")
-install.packages("dismo")
-install.packages("rasterVis")
-install.packages("reshape")
+#install.packages("terra")
+#install.packages("dplyr")
+#install.packages("sf")
+#install.packages("ggplot2")
+#install.packages("dismo")
+#install.packages("rasterVis")
+#install.packages("reshape")
 
 ## Import packages
 library(terra)
@@ -64,7 +64,7 @@ plot(tas_dif)
 # Hint: You can set plot titles using 'main'
 # Control the colours using col = brewer.pal(11, 'PaletteName') (see https://colorbrewer2.org/ for colour options)
 # You can plot multiple figures in one plot using par (mfrow = c(nrows, ncols))
-
+# Also check the instructions from Session 1!
 
 # Extracting out point data (timeseries)
 tas[50,50]
@@ -85,6 +85,8 @@ ggplot(data = spat_ave, aes(y=mean, x=date))+
   geom_smooth(method = "lm") +
   theme_bw()
 
+# Can you add another model to this plot and compare the two?
+# Hint: You'll need to prepare a dataframe with data for all models in it. One of the columns will need to be the values, and the other the model name.
 
 # Part 2: Rainfall Data (multiple models)
 
@@ -130,7 +132,7 @@ levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
 # Can you modify this plot to show more infomation? Can you add a title and change the colours?
 # Would showing multiple models on this plot help?
 
-# Part 3: Calculating BioClim Indices 
+# Part 3: Calculating BioClim Indices  !!! add AGCD !!! 
 
 # now working with monthly data
 setwd("C:/R Code/Training/ICCB_training/data/monthly/")
@@ -193,4 +195,5 @@ print(bio_base[, c("bio5", "bio6", "bio7", "bio12", "bio15")])
 print(bio_fut[, c("bio5", "bio6", "bio7", "bio12", "bio15")])
 
 
-
+## How would you calculate the bioclimatic indicators for all cells within the file?
+# !!! Will not discuss this in workshop, but can add an example in the complete script !!!
