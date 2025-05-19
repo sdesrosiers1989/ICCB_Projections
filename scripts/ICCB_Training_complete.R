@@ -66,7 +66,7 @@ plot(tas_fut)
 tas_dif = tas_fut - tas_base
 plot(tas_dif)
 
-# Can you make this plot nicer? Add a title and change the colours
+# Q. Can you make this plot nicer? Add a title and change the colours
 # Hint: You can set plot titles using 'main'
 # Control the colours using col = brewer.pal(11, 'PaletteName') (see https://colorbrewer2.org/ for colour options)
 # You can plot multiple figures in one plot using par (mfrow = c(nrows, ncols))
@@ -98,7 +98,7 @@ ggplot(data = spat_ave, aes(y=mean, x=date))+
   geom_smooth(method = "lm") +
   theme_bw()
 
-# Can you add another model to this plot and compare the two?
+# Q. Can you add another model to this plot and compare the two?
 # Hint: You'll need to prepare a dataframe with data for all models in it. One of the columns will need to be the values, and the other the model name.
 spat_ave$model <- "GFDL-ESM4" # add model name to your spatial average data
 tas_ECEarth <- rast("tas_EC-Earth3_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_sem_1981-2100.nc") # load in a new model and prepare the datafarme
@@ -165,7 +165,7 @@ my.at = c(-Inf, my.at, Inf)
 levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
                 col.regions=((brewer.pal(11,"RdBu"))))
   
-# Can you modify this plot to show more infomation? Can you add a title and change the colours?
+# Q. Can you modify this plot to show more infomation? Can you add a title and change the colours?
 # Would showing multiple models on this plot help?
 # We've included levelplot here as it's a popular package that creates nicer base plots than the basic plotting function
 # however it doesn't work that well with terra when it comes to shapefiles. To plot shapefiles over the raster you'll need to convert
@@ -219,7 +219,7 @@ p2 <- levelplot(pr_pdif_245_masked, at = my.at, cuts=11, pretty=T,
 grid.arrange(p1, p2, nrow = 1, ncol=2, top = textGrob('Ensemble Average', gp=gpar(fontsize=15)))
 
 
-# Part 3: Calculating BioClim Indices 
+# Part 3: Validating your data and Calculating BioClim Indices 
 
 # now working with monthly data
 setwd("C:/R Code/Training/ICCB_training/data/monthly/")
@@ -353,7 +353,7 @@ bio_fut = biovars(df_fut$pr, df_fut$tmin, df_fut$tmax)
 print(bio_base[, c("bio5", "bio6", "bio12", "bio15")])
 print(bio_fut[, c("bio5", "bio6", "bio12", "bio15")])
 
-## How would you calculate the bioclimatic indicators for all cells within the file?
+## Q. How would you calculate the bioclimatic indicators for all cells within the file?
 # Loops in R: https://www.geeksforgeeks.org/loops-in-r-for-while-repeat/
 
 # Get size of input data so we can setup an output array
@@ -428,17 +428,17 @@ for (i in seq(1,19)){
   values(bioclim_base_clim_ras[[i]]) <- bioclim_base_clim[i,,]
 }
 
-#plot one
+#plot one bioclimatic index
 levelplot(bioclim_base_clim_ras[[1]], margin = FALSE, main = "BIO 1: Annual Mean Temperature", col.regions=((brewer.pal(9,"YlOrRd"))),
           at = seq(16, 22, length.out = 10))
 
-# Plot all temp together together
+# Plot all temp indices together together
 my.at <- seq(0, 50, length.out = 10)
 my.at = c(my.at, Inf)
 levelplot(bioclim_base_clim_ras[[1:11]], margin = FALSE, main = "BIOCLIMATIC INDICATORS", col.regions=((brewer.pal(9,"YlOrRd"))),
           at = my.at, names =  c("BIO1", "BIO2", "BIO3", "BIO4", "BIO5", "BIO6", "BIO7", "BIO8", "BIO9", "BIO10", "BIO11"))
 
-#Plot all precip together
+#Plot all precip indices together
 my.at <- seq(0, 50, length.out = 9)
 my.at = c(my.at, Inf)
 levelplot(bioclim_base_clim_ras[[12:19]], margin = FALSE, main = "BIOCLIMATIC INDICATORS", col.regions=((brewer.pal(9,"GnBu"))),

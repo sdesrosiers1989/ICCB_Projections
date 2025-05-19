@@ -64,7 +64,7 @@ plot(tas_fut)
 tas_dif = tas_fut - tas_base
 plot(tas_dif)
 
-# Can you make this plot nicer? Add a title and change the colours
+# Q. Can you make this plot nicer? Add a title and change the colours
 # Hint: You can set plot titles using 'main'
 # Control the colours using col = brewer.pal(11, 'PaletteName') (see https://colorbrewer2.org/ for colour options)
 # You can plot multiple figures in one plot using par (mfrow = c(nrows, ncols))
@@ -89,7 +89,7 @@ ggplot(data = spat_ave, aes(y=mean, x=date))+
   geom_smooth(method = "lm") +
   theme_bw()
 
-# Can you add another model to this plot and compare the two?
+# Q. Can you add another model to this plot and compare the two?
 # Hint: You'll need to prepare a dataframe with data for all models in it. One of the columns will need to be the values, and the other the model name.
 
 # Part 2: Rainfall Data (multiple models)
@@ -139,13 +139,13 @@ my.at = c(-Inf, my.at, Inf)
 levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
                 col.regions=((brewer.pal(11,"RdBu"))))
   
-# Can you modify this plot to show more infomation? Can you add a title and change the colours?
+# Q. Can you modify this plot to show more infomation? Can you add a title and change the colours?
 # Would showing multiple models on this plot help?
 
-# Can we compare the results from SSP370 to another Scenario?
+# Q. Can we compare the results from SSP370 to another Scenario?
 
 
-# Part 3: Calculating BioClim Indices  !!! add AGCD !!! 
+# Part 3: Validating your data Calculating BioClim Indices  
 
 # now working with monthly data
 setwd("C:/R Code/Training/ICCB_training/data/monthly/")
@@ -280,5 +280,5 @@ print(bio_base[, c("bio5", "bio6", "bio12", "bio15")])
 print(bio_fut[, c("bio5", "bio6", "bio12", "bio15")])
 
 
-## How would you calculate the bioclimatic indicators for all cells within the file?
-# !!! Will not discuss this in workshop, but can add an example in the complete script !!!
+## Q. How would you calculate the bioclimatic indicators for all cells within the file?
+# !!! Will not discuss this in this workshop, but we have added an example in the complete script !!!
