@@ -153,7 +153,11 @@ names(tmin) = dates
 names(pr) = dates
 
 # Plot the data
-levelplot(mean(tmin[[0:360]]), margin = FALSE, par.settings = YlOrRdTheme, main = 'TMIN')
+lga_shp2 <- as(lga_shp, "Spatial") # convert terra shapefile into format compatible with sp.polygons
+qld2 <- as(qld_shp, "Spatial")
+levelplot(mean(tmin[[0:360]]), margin = FALSE, par.settings = BuRdTheme, main = 'TMIN') +
+  latticeExtra::layer(sp.polygons(lga_shp2, col = 'blue')) + # tell R we want to use layer from lattice, not from ggplot2
+  latticeExtra::layer(sp.polygons(qld2))
 
 # Masking data to Sunshine Coast
 pr_masked <- crop(pr, lga_shp, mask = TRUE)
