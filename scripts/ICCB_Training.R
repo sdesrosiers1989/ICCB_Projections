@@ -21,21 +21,26 @@ library(rasterVis)
 library(reshape)
 library(RColorBrewer)
 
-
+##########################################################################
 # Part 1: Temperature Data (one model)
 
 ## Set working directory
-setwd("C:/R Code/Training/ICCB_training/data/annual/")
+setwd("C:/R Code/Training/ICCB/")
 getwd()                   # get work directory
-dir()                     # list files in the work directory
+dir()                     # list folders in the work directory
+dir("data/annual/")       # List files in subdirectory
 
 # Retrieve file names in the directory
-files=dir()
+files=dir("data/annual/")
 files[1]
 
 # Load file and query data (working with one model)
-tas = rast("tas_GFDL-ESM4_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_sem_1981-2100.nc")
+tas = rast("data/annual/tas_GFDL-ESM4_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_sem_1981-2100.nc")
 tas 
+
+#Check your lat and lon coords
+xFromCol(tas)
+yFromRow(tas)
 
 # Adding missing year values to the data
 dates = seq(as.Date("1981-01-01"), as.Date("2100-12-01"), by="year")
@@ -72,6 +77,9 @@ plot(tas_dif)
 
 # Extracting out point data (timeseries)
 tas[50,50]                  # extracts data from the 50th lat and 50th lon position
+cells <- cellFromRowCol(tas[[1]], 50, 50)
+xyFromCell(tas,cells)
+
 df = melt(tas[50,50])
 
 # Basic plot
@@ -92,13 +100,15 @@ ggplot(data = spat_ave, aes(y=mean, x=date))+
 # Q. Can you add another model to this plot and compare the two?
 # Hint: You'll need to prepare a dataframe with data for all models in it. One of the columns will need to be the values, and the other the model name.
 
+
+##########################################################################
 # Part 2: Rainfall Data (multiple models)
-
 # Working with multiple Models
-pr_files <- list.files(pattern = "pr", full.names = FALSE)            # Lists all files, including all scenarios
-pr_files <- list.files(pattern = "pr.*ssp370", full.names = FALSE)    # Lists files with only ssp370
 
-pr_data = rast(pr_files)*365.25  # daily mean to annual total
+pr_files <- list.files(path = "data/annual/", pattern = "pr", full.names = TRUE)            # Lists all files, including all scenarios
+pr_files <- list.files(path = "data/annual/", pattern = "pr.*ssp370", full.names = TRUE)    # Lists files with only ssp370
+
+pr_data = rast(pr_files)*365  # daily mean to annual total
 pr_data
 
 # Repeating the year names multiple times to correspond with multiple models
@@ -123,20 +133,20 @@ levelplot(pr_base)
 levelplot(pr_fut)
 
 # Cutting data to Queensland
-qld_shp = vect('C:/R Code/Training/ICCB_training/data/shp/QLD_State_Mask.shp')
+qld_shp = vect('data/shp/QLD_State_Mask.shp')
 pr_dif = pr_fut - pr_base
 pr_dif_masked <- crop(pr_dif, qld_shp, mask = TRUE)
-levelplot(pr_dif_masked)
+levelplot(pr_dif_masked, margin = FALSE)
 
 # Plotting the percent change 
 pr_pdif = (pr_fut - pr_base ) / pr_base *100  #Percent difference
 pr_pdif_masked <- crop(pr_pdif, qld_shp, mask = TRUE)
-levelplot(pr_pdif_masked)
+levelplot(pr_pdif_masked, margin = FALSE)
 
 # Specifying plotting bins and colours
 my.at <- seq(-20, 20, length.out = 10)
 my.at = c(-Inf, my.at, Inf)
-levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
+levelplot(pr_pdif_masked, margin = FALSE, at = my.at, cuts=11, pretty=T,
                 col.regions=((brewer.pal(11,"RdBu"))))
   
 # Q. Can you modify this plot to show more infomation? Can you add a title and change the colours?
@@ -145,17 +155,16 @@ levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
 # Q. Can we compare the results from SSP370 to another Scenario?
 
 
+##########################################################################
 # Part 3: Validating your data Calculating BioClim Indices  
 
 # now working with monthly data
-setwd("C:/R Code/Training/ICCB_training/data/monthly/")
-getwd() # get work directory
-dir() # list files in the work directory
-lga_shp = vect('C:/R Code/Training/ICCB_training/data/shp/SunshineCoast.shp')
+dir("data/monthly/") # list files in the work directory
+lga_shp = vect('data/shp/SunshineCoast.shp')
 
-tmax = rast("tasmax_GFDL-ESM4_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_mon_1981-2100.nc")
-tmin = rast("tasmin_GFDL-ESM4_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_mon_1981-2100.nc")
-pr = rast("pr_GFDL-ESM4_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_mon_1981-2100.nc" )
+tmax = rast("data/monthly/tasmax_GFDL-ESM4_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_mon_1981-2100.nc")
+tmin = rast("data/monthly/tasmin_GFDL-ESM4_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_mon_1981-2100.nc")
+pr = rast("data/monthly/pr_GFDL-ESM4_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_mon_1981-2100.nc" )
 
 #interogate data
 tmax
@@ -174,14 +183,12 @@ levelplot(mean(tmin[[0:360]]), margin = FALSE, par.settings = BuRdTheme, main = 
 
 
 # Validating the data against observations
-setwd("C:/R Code/Training/ICCB_training/data/obs/")
-getwd() # get work directory
-dir() # list files in the work directory
+dir("data/obs/") # list files in the obs dir
 
 # Load in observation data
-obs_tmax = rast(list.files(pattern = "tmax", full.names = FALSE))
-obs_tmin = rast(list.files(pattern = "tmin", full.names = FALSE))
-obs_pr = rast(list.files(pattern = "precip", full.names = FALSE))
+obs_tmax = rast(list.files(path = "data/obs/", pattern = "tmax", full.names = TRUE))
+obs_tmin = rast(list.files(path = "data/obs/", pattern = "tmin", full.names = TRUE))
+obs_pr = rast(list.files(path = "data/obs/", pattern = "precip", full.names = TRUE))
 
 # Interogate the data (note the difference in resolution and time period)
 # to compare data need to make them on the same spatial and temporal scales...
@@ -223,6 +230,8 @@ print(paste("RMSE:", rmse))
 
 mape = global((abs((tmin_his_mean - obs_tmin_regridded_mean) / obs_tmin_regridded_mean) * 100), fun = "mean", na.rm = TRUE)[1]
 print(paste("MAPE:", mape))
+
+# Q: Can you load in another model and compare the bias to this one?
 
 
 # Masking data to Sunshine Coast
@@ -280,5 +289,48 @@ print(bio_base[, c("bio5", "bio6", "bio12", "bio15")])
 print(bio_fut[, c("bio5", "bio6", "bio12", "bio15")])
 
 
-## Q. How would you calculate the bioclimatic indicators for all cells within the file?
-# !!! Will not discuss this in this workshop, but we have added an example in the complete script !!!
+# How can we repeat this process for every single grid cell across SEQ???
+# Can loop through every single lat and lon and calculate and save the outputs...
+# Or can use customised functions with terra applied to all cells 
+
+tmax_base = tmax[[dates >= as.Date("1981-01-01") & dates < as.Date("2011-01-01")]]
+tmin_base = tmin[[dates >= as.Date("1981-01-01") & dates < as.Date("2011-01-01")]]
+pr_base = pr[[dates >= as.Date("1981-01-01") & dates < as.Date("2011-01-01")]]
+
+tmax_fut = tmax[[dates >= as.Date("2071-01-01") & dates < as.Date("2101-01-01")]]
+tmin_fut = tmin[[dates >= as.Date("2071-01-01") & dates < as.Date("2101-01-01")]]
+pr_fut = pr[[dates >= as.Date("2071-01-01") & dates < as.Date("2101-01-01")]]
+
+# Stack the inputs
+bioclim_input_base =c(pr_base, tmin_base, tmax_base)
+bioclim_input_fut =c(pr_fut, tmin_fut, tmax_fut)
+
+# Function to calculate the bioclimatic indices customised for stacked terra inputs
+fun_bio_calc <- function(x) {
+  # Split the input into pr, tmin, and tmax
+  n <- length(x) / 3
+  pr <- x[1:n]
+  tmin <- x[(n + 1):(2 * n)]
+  tmax <- x[(2 * n + 1):(3 * n)]
+  
+  # Calculate bioclimatic variables for the time series
+  bio <- biovars(pr, tmin, tmax)
+  
+  # Return the bioclimatic variables as a vector
+  return(bio)
+}
+
+
+# Apply the function using terra::app
+bio_base <- app(bioclim_input_base, fun = fun_bio_calc)
+bio_fut <- app(bioclim_input_fut, fun = fun_bio_calc)
+plot(bio_base[[12]])
+plot(bio_fut[[12]])
+
+# Q: can you plot the bioclimatic indices in the past and present and compare the changes?
+
+
+
+# Q: What does the bioclimatic indicators look like for a lower emissions scenario?
+
+
