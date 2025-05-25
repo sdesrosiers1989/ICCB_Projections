@@ -108,7 +108,7 @@ ggplot(data = spat_ave, aes(y=mean, x=date))+
 pr_files <- list.files(path = "data/annual/", pattern = "pr", full.names = TRUE)            # Lists all files, including all scenarios
 pr_files <- list.files(path = "data/annual/", pattern = "pr.*ssp370", full.names = TRUE)    # Lists files with only ssp370
 
-pr_data = rast(pr_files)*365  # daily mean to annual total
+pr_data = rast(pr_files)*365  # daily mean to annual total. CCAM has a 365 day calendar.
 pr_data
 
 # Repeating the year names multiple times to correspond with multiple models

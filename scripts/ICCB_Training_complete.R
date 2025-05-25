@@ -71,7 +71,7 @@ plot(tas_dif)
 # Hint: You can set plot titles using 'main'
 # Control the colours using col = brewer.pal(11, 'PaletteName') (see https://colorbrewer2.org/ for colour options)
 # You can plot multiple figures in one plot using par (mfrow = c(nrows, ncols))
-qld_shp = vect('C:/R Code/Training/ICCB_training/data/shp/QLD_State_Mask.shp') # this was going to be loaded later in the workshop, but loading now for plotting
+qld_shp = vect('C:/R Code/Training/ICCB/data/shp/QLD_State_Mask.shp') # this was going to be loaded later in the workshop, but loading now for plotting
 par( mfrow= c(3,1) ) # Set up figure to have 3 rows and 1 column
 plot(tas_base, col = brewer.pal(11,"YlOrRd"), main = "Historical", range = c(14, 30))
 lines(qld_shp)
@@ -102,7 +102,7 @@ ggplot(data = spat_ave, aes(y=mean, x=date))+
 # Q. Can you add another model to this plot and compare the two?
 # Hint: You'll need to prepare a dataframe with data for all models in it. One of the columns will need to be the values, and the other the model name.
 spat_ave$model <- "GFDL-ESM4" # add model name to your spatial average data
-tas_ECEarth <- rast("tas_EC-Earth3_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_sem_1981-2100.nc") # load in a new model and prepare the datafarme
+tas_ECEarth <- rast("data/annual/tas_EC-Earth3_ssp370_r1i1p1f1_CCAM10_aus-10i_10km_sem_1981-2100.nc") # load in a new model and prepare the datafarme
 spat_ave_EC <- global(tas_ECEarth, fun = mean, na.rm = TRUE)
 spat_ave_EC$date <- dates
 spat_ave_EC$model <- 'EC-Earth3'
@@ -197,8 +197,8 @@ grid.arrange(p1, p2, nrow = 1, ncol = 2, top = textGrob('Ensemble Average', gp=g
 
 
 # Plotting against another emissions scenario
-pr_files_245 <- list.files(pattern = "pr.*ssp245", full.names = FALSE)    # Lists files with only ssp370
-pr_data_245 = rast(pr_files_245)*365.25  # daily mean to annual total
+pr_files_245 <- list.files(path = "data/annual/", pattern = "pr.*ssp245", full.names = TRUE)    # Lists files with only ssp370
+pr_data_245 = rast(pr_files_245)*365  # daily mean to annual total. CCAM has a 365 day calendar.
 names(pr_data_245) = years_rep
 pr_modavg_245 = tapp(pr_data_245, years, fun = mean)
 pr_base_245 = mean(pr_modavg_245[[years>=1981 & years<=2010]])  # Converting from daily mean to annual mean
@@ -207,12 +207,12 @@ pr_pdif_245 = (pr_fut_245 - pr_base_245 ) / pr_base_245 *100  #Percent differenc
 pr_pdif_245_masked <- crop(pr_pdif_245, qld_shp, mask = TRUE)
 
 p1 <- levelplot(pr_pdif_masked, at = my.at, cuts=11, pretty=T,
-                col.regions=rev((brewer.pal(11,"PRGn"))), margin = FALSE,
+                col.regions=(brewer.pal(11,"PRGn")), margin = FALSE,
                 main = list(label = 'Precipitation Change: SSP370', cex = 1),
                 colorkey = list(title = "%")) +
   latticeExtra::layer(sp.polygons(qld2))
 p2 <- levelplot(pr_pdif_245_masked, at = my.at, cuts=11, pretty=T,
-                col.regions=rev((brewer.pal(11,"PRGn"))), margin = FALSE,
+                col.regions=(brewer.pal(11,"PRGn")), margin = FALSE,
                 main = list(label = 'Precipitation Change: SSP245', cex = 1),
                 colorkey = list(title = "%")) +
   latticeExtra::layer(sp.polygons(qld2))
@@ -390,93 +390,43 @@ plot(bio_fut[[12]])
 
 
 
-
-# Loops in R: https://www.geeksforgeeks.org/loops-in-r-for-while-repeat/
-
-# Get size of input data so we can setup an output array
-lats <- ncol(pr_masked)
-lons <- nrow(pr_masked)
-times <- dim(pr_masked)[3]
-
-# Create output array
-syear <- 1981
-eyear <- 2100
-nyears <- eyear - syear + 1
-fill_value <- NaN
-out <- array(data=fill_value, dim = c(19, lons, lats, nyears))
-
-print('Beginning bioclimatic indices calculation')
-
-for(i in seq(1, lons)){ # loop through lons
-  
-  for(j in seq(1, lats)){ # loop through lats
-    
-    #Print some information about where you are in the process
-    string <- paste(i,",",j)
-    print(string)
-    
-    if (is.na(pr_masked[i,j, 1]$`1981-01-01`) == FALSE) { # check if data masked
-     
-      for(year in seq(syear, eyear)){
-        
-        # Define time indices
-        year_index <- (year - syear) + 1
-        start_index <- 12 * (year - syear) + 1
-        end_index <- 12 * (year - syear) + 12
-        
-        # Get input data
-        df <- data.frame(
-          pr = unlist(array(pr_masked[i, j, start_index:end_index])),
-          tasmin = unlist(array(tmin_masked[i, j, start_index:end_index])),
-          tasmax = unlist(array(tmax_masked[i, j, start_index:end_index])))
-        
-        # Create input data
-        if (is.na(df[1,1]) == FALSE) {
-          bioclim_out <- biovars(df$pr, df$tasmin, df$tasmax)
-          #print(bioclim_out)
-          for (k in seq(1,19)) {
-            out[k, i, j, year_index] <- bioclim_out[k]
-          }
-          
-        }
-        
-      }
-      
-    }
-    
-  }
-  
-}
-
-# At this point we usually save the file as a netcdf using the netcdf package 
-# https://search.r-project.org/CRAN/refmans/ncdf4/html/ancvar_put.html
-# https://www.r-bloggers.com/2016/08/a-netcdf-4-in-r-cheatsheet/
-
-# Plot examples
-bioclim_base <- out[,,,1:30]
-bioclim_fut <- out[,,,91:120]
-bioclim_base_clim <- apply(bioclim_base, c(1, 2, 3), FUN = mean) # average over time to get climatology
-bioclim_fut_clim <- apply(bioclim_fut, c(1, 2, 3), FUN = mean) # average over time to get future climatology
-
-# turn back into a terra raster for plotting
-# This isn't something we usually do, but doing it here for display purposes
-bioclim_base_clim_ras <- rast(extent=c(152.55,153.15,-26.95,-26.45), ncol = 6, nrow = 5, nlyr = 19, crs = crs(pr_masked))
-for (i in seq(1,19)){
-  values(bioclim_base_clim_ras[[i]]) <- bioclim_base_clim[i,,]
-}
+# Q: can you plot the bioclimatic indices in the past and present and compare the changes?
 
 #plot one bioclimatic index
-levelplot(bioclim_base_clim_ras[[1]], margin = FALSE, main = "BIO 1: Annual Mean Temperature", col.regions=((brewer.pal(9,"YlOrRd"))),
+levelplot(bio_base[[1]], margin = FALSE, main = "BIO 1: Annual Mean Temperature", col.regions=((brewer.pal(9,"YlOrRd"))),
           at = seq(16, 22, length.out = 10))
 
+
 # Plot all temp indices together together
-my.at <- seq(0, 50, length.out = 10)
+my.at <- seq(0, 50, length.out = 8)
 my.at = c(my.at, Inf)
-levelplot(bioclim_base_clim_ras[[1:11]], margin = FALSE, main = "BIOCLIMATIC INDICATORS", col.regions=((brewer.pal(9,"YlOrRd"))),
+levelplot(bio_base[[1:11]], margin = FALSE, main = "BIOCLIMATIC INDICATORS", col.regions=((brewer.pal(9,"YlOrRd"))),
           at = my.at, names =  c("BIO1", "BIO2", "BIO3", "BIO4", "BIO5", "BIO6", "BIO7", "BIO8", "BIO9", "BIO10", "BIO11"))
 
 #Plot all precip indices together
-my.at <- seq(0, 50, length.out = 9)
+my.at <- seq(0, 50, length.out = 8)
 my.at = c(my.at, Inf)
-levelplot(bioclim_base_clim_ras[[12:19]], margin = FALSE, main = "BIOCLIMATIC INDICATORS", col.regions=((brewer.pal(9,"GnBu"))),
+levelplot(bio_base[[12:19]], margin = FALSE, main = "BIOCLIMATIC INDICATORS", col.regions=((brewer.pal(9,"GnBu"))),
           at = my.at, names =  c("BIO12", "BIO13", "BIO14", "BIO15", "BIO16", "BIO17", "BIO18", "BIO19"))
+
+# Compare changes
+bio_dif = bio_fut - bio_base
+bio_sdm <- c(bio_dif[[5:6]], bio_dif[[12]], bio_dif[[15]]) # Let's just get the layers used for the species modelling tomorrow
+
+levelplot(bio_dif[[5]], margin = FALSE, main = "BIO 5: Max Temperature of Warmest Month", col.regions=((brewer.pal(9,"YlOrRd"))),
+          at = seq(3, 6, length.out = 10))
+
+# Plot temp indicators
+levelplot(bio_sdm[[1:2]], margin = FALSE, main = "CHANGE IN BIOCLIMATIC INDICATORS", names = c("BIO5: Max Temp Warmest Month", "BIO6: Min Temp Coldest Month"),
+          col.regions=((brewer.pal(9,"YlOrRd"))),
+          at = seq(3, 6, length.out = 10))
+
+# Plot rainfall indicators
+my.at <- seq(-150, 150, length.out = 10)
+my.at = c(-Inf, my.at, Inf)
+levelplot(bio_sdm[[3:4]], margin = FALSE, main = "CHANGE IN BIOCLIMATIC INDICATORS", names = c("BIO12: Annual Precipitation", "BIO15: Precipitation Seasonality"),
+          col.regions=((brewer.pal(9,"PRGn"))),
+          at = my.at)
+# Q: What does the bioclimatic indicators look like for a lower emissions scenario?
+
+
