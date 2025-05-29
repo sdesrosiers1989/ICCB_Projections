@@ -3,8 +3,9 @@
 This repository has all of the scripts and data for the workshop on using climate projections in R for ICCB 2025. The powerpoint slides include instructions for running through the scripts and pictures of what the output should look like.
 
 ## Data
-`annual`: annual average precipitation (mm/day) and temperature (celsius) for ACCESS-ESM1-5 r6i1p1f1, EC-Earth3 r1i1p1f1 and GFDL-ESM4 r1i1p1f1 for 1981 - 2100 for SSP370 for Queensland.  
-`monthly`: monthly pr (mm/day), tasmax and tasmin (celsius) for GFDL-ESM4 r1i1p1f1 for 1981 - 2100 for SSP370 for South-East Queensland.  
+`annual`: annual average precipitation (mm/day) and temperature (celsius) for ACCESS-ESM1-5 r6i1p1f1, EC-Earth3 r1i1p1f1 and GFDL-ESM4 r1i1p1f1 for 1981 - 2100 for SSP370, SSP245, SSP126 for Queensland.  
+`monthly`: monthly pr (mm/day), tasmax and tasmin (celsius) for all three models for 1981 - 2100 and all three scenarios for South-East Queensland.  
+`obs`: observational data from the Australian Gridded Climate Dataset (AGCD). Variables include daily maximum and minimum temperature and precipitation for 1981 - 2020 at a 5km resolution.  
 `shp`: Shapefiles for Queensland and the Sunshine Coast.  
 
 ## Scripts
