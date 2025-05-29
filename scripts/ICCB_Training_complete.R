@@ -25,7 +25,7 @@ library(RColorBrewer)
 # Part 1: Temperature Data (one model)
 
 ## Set working directory
-setwd("C:/R Code/Training/ICCB_training/data/annual/")
+setwd("C:/R Code/Training/ICCB/")
 getwd()                   # get work directory
 dir()                     # list files in the work directory
 dir("data/annual/")       # List files in subdirectory
@@ -71,7 +71,7 @@ plot(tas_dif)
 # Hint: You can set plot titles using 'main'
 # Control the colours using col = brewer.pal(11, 'PaletteName') (see https://colorbrewer2.org/ for colour options)
 # You can plot multiple figures in one plot using par (mfrow = c(nrows, ncols))
-qld_shp = vect('C:/R Code/Training/ICCB/data/shp/QLD_State_Mask.shp') # this was going to be loaded later in the workshop, but loading now for plotting
+qld_shp = vect('data/shp/QLD_State_Mask.shp') # this was going to be loaded later in the workshop, but loading now for plotting
 par( mfrow= c(3,1) ) # Set up figure to have 3 rows and 1 column
 plot(tas_base, col = brewer.pal(11,"YlOrRd"), main = "Historical", range = c(14, 30))
 lines(qld_shp)
